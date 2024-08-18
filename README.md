@@ -58,21 +58,3 @@ Creează clasele pentru Client, Produs și Factura.
 • Interfață utilizator: Funcții pentru citirea datelor de la tastatură sau din linia de comandă. 
 • Generarea facturilor în format .txt: Funcție pentru crearea fișierelor de factură.
 
-- pip install sqlalchemy pymysql from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Table from sqlalchemy.ext.declarative import declarative_base from sqlalchemy.orm import relationship, sessionmaker
-- Base = declarative_base()
-
-class Client(Base): tablename = 'client' id = Column(Integer, primary_key=True) nume = Column(String) cif_cui = Column(String) adresa = Column(String) facturi = relationship('Factura', back_populates='client', foreign_keys='Factura.client_id') furnizori = relationship('Factura', back_populates='furnizor', foreign_keys='Factura.furnizor_id')
-
-class Produs(Base): tablename = 'produs' id = Column(Integer, primary_key=True) denumire = Column(String) cantitate = Column(Float) pret_unitar = Column(Float) pret_total = Column(Float)
-
-class Factura(Base): tablename = 'factura' id = Column(Integer, primary_key=True) numar = Column(String) total = Column(Float) client_id = Column(Integer, ForeignKey('client.id')) furnizor_id = Column(Integer, ForeignKey('client.id')) client = relationship('Client', foreign_keys=[client_id], back_populates='facturi') furnizor = relationship('Client', foreign_keys=[furnizor_id], back_populates='furnizori') produse = relationship('Produs', secondary='factura_produs', back_populates='facturi')
-
-factura_produs = Table('factura_produs', Base.metadata, Column('factura_id', Integer, ForeignKey('factura.id')), Column('produs_id', Integer, ForeignKey('produs.id')) )
-
-def create_engine_and_session(db_url): engine = create_engine(db_url) Base.metadata.create_all(engine) Session = sessionmaker(bind=engine) return engine, Session()
-
-Pentru SQLite
-sqlite_engine, sqlite_session = create_engine_and_session('sqlite:///facturi.db')
-
-Pentru MySQL
-mysql_engine, mysql_session = create_engine_and_session('mysql+pymysql://user:password@localhost/facturi')
