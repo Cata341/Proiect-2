@@ -4,6 +4,12 @@ from sqlalchemy.orm import relationship, sessionmaker
 
 Base = declarative_base()
 
+factura_produs = Table('factura_produs', Base.metadata,
+                       Column('factura_id', Integer, ForeignKey('factura.id')),
+                       Column('produs_id', Integer, ForeignKey('produs.id'))
+                       )
+
+
 class Client(Base):
     __tablename__ = 'client'
     id = Column(Integer, primary_key=True)
@@ -13,14 +19,17 @@ class Client(Base):
     facturi = relationship('Factura', back_populates='client', foreign_keys='Factura.client_id')
     furnizori = relationship('Factura', back_populates='furnizor', foreign_keys='Factura.furnizor_id')
 
+
 class Produs(Base):
     __tablename__ = 'produs'
     id = Column(Integer, primary_key=True)
     denumire = Column(String)
     cantitate = Column(Float)
     pret_unitar = Column(Float)
-
     pret_total = Column(Float)
+
+    facturi = relationship("Factura", secondary=factura_produs, back_populates="produse")
+
 
 class Factura(Base):
     __tablename__ = 'factura'
@@ -33,10 +42,6 @@ class Factura(Base):
     furnizor = relationship('Client', foreign_keys=[furnizor_id], back_populates='furnizori')
     produse = relationship('Produs', secondary='factura_produs', back_populates='facturi')
 
-factura_produs = Table('factura_produs', Base.metadata,
-    Column('factura_id', Integer, ForeignKey('factura.id')),
-    Column('produs_id', Integer, ForeignKey('produs.id'))
-)
 
 def create_engine_and_session(db_url):
     engine = create_engine(db_url)
@@ -44,8 +49,10 @@ def create_engine_and_session(db_url):
     Session = sessionmaker(bind=engine)
     return engine, Session()
 
+
 # Pentru SQLite
 sqlite_engine, sqlite_session = create_engine_and_session('sqlite:///facturi.db')
+
 
 # Pentru MySQL
 # mysql_engine, mysql_session = create_engine_and_session('mysql+pymysql://user:password@localhost/facturi')
@@ -55,11 +62,13 @@ def adauga_client(session, nume, cif_cui, adresa):
     session.add(client)
     session.commit()
 
+
 def adauga_produs(session, denumire, cantitate, pret_unitar):
     pret_total = cantitate * pret_unitar
     produs = Produs(denumire=denumire, cantitate=cantitate, pret_unitar=pret_unitar, pret_total=pret_total)
     session.add(produs)
     session.commit()
+
 
 def adauga_factura(session, client_id, furnizor_id, produse):
     total = sum([produs.pret_total for produs in produse])
@@ -68,9 +77,11 @@ def adauga_factura(session, client_id, furnizor_id, produse):
     session.add(factura)
     session.commit()
 
+
 def lista_clienti(session):
     for client in session.query(Client).all():
         print(f"{client.id}: {client.nume} - {client.cif_cui} - {client.adresa}")
+
 
 def lista_produse(session):
     for produs in session.query(Produs).all():
@@ -140,5 +151,6 @@ def main():
         elif optiune == '0':
             break
 
-        if __name__ == "__main__":
-            main()
+
+if __name__ == "__main__":
+    main()
